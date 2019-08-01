@@ -8,7 +8,7 @@ import time
 
 import tensorflow as tf
 
-import Architecture
+import Architecture as cifar10
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -116,16 +116,16 @@ def train():
             log_device_placement=FLAGS.log_device_placement, gpu_options = gpu_options),save_checkpoint_secs=240
 ) as mon_sess:
       while not mon_sess.should_stop():        
-	if i % 100 == 1:
-	    _, summary = mon_sess.run([train_opS, summary_op])
-	    _, summary = mon_sess.run([train_opT, summary_op])
-	    _, summary = mon_sess.run([train_opF, summary_op])
-	    summary_writer.add_summary(summary, i)
-	else:
-	    mon_sess.run(train_opS)
-	    mon_sess.run(train_opT)
-	    mon_sess.run(train_opF)
-	i += 1
+        if i % 100 == 1:
+          _, summary = mon_sess.run([train_opS, summary_op])
+          _, summary = mon_sess.run([train_opT, summary_op])
+          _, summary = mon_sess.run([train_opF, summary_op])
+          summary_writer.add_summary(summary, i)
+        else:
+            mon_sess.run(train_opS)
+            mon_sess.run(train_opT)
+            mon_sess.run(train_opF)
+        i += 1  
 
 
 def main(argv=None):  # pylint: disable=unused-argument

@@ -85,10 +85,10 @@ def distorted_inputsB(a):
   if not FLAGS.data_dir:
     raise ValueError('Please supply a data_dir')
   data_dir = FLAGS.data_dir
-  if a==1:	
-    images, dmaps, labels, sizes, slabels = cifar10_input.distorted_inputs(data_dir=data_dir, batch_size=FLAGS.batch_size)
+  if a==1:  
+    images, dmaps, labels, sizes, slabels = data_train.distorted_inputs(data_dir=data_dir, batch_size=FLAGS.batch_size)
   else:
-    images, dmaps, labels, sizes, slabels = cifar10_input.distorted_inputsA(data_dir=data_dir, batch_size=FLAGS.batch_size)
+    images, dmaps, labels, sizes, slabels = data_train.distorted_inputsA(data_dir=data_dir, batch_size=FLAGS.batch_size)
   if FLAGS.use_fp16:
     images = tf.cast(images, tf.float16)
     dmaps  = tf.case(images, tf.float16)
@@ -102,8 +102,8 @@ def inputs(testset):
   if not FLAGS.data_dir:
     raise ValueError('Please supply a data_dir')
   data_dir = FLAGS.data_dir
-  images, dmaps, labels, sizes, slabels = cifar10_input.inputs(testset = testset,
-				       data_dir=data_dir,
+  images, dmaps, labels, sizes, slabels = data_train.inputs(testset = testset,
+                       data_dir=data_dir,
                                        batch_size=FLAGS.batch_size)
   if FLAGS.use_fp16:
     images = tf.cast(images, tf.float16)
@@ -130,283 +130,283 @@ def inference(images, size,labels, training_nn, training_class, _reuse):
     'epsilon': batch_norm_epsilon,
     'scale': batch_norm_scale,
     'updates_collections': None, #
-  }	
+  } 
   with arg_scope( [layers.conv2d],
-		     kernel_size = 3,
-		     weights_initializer = tf.random_normal_initializer(stddev=0.02),
-		     biases_initializer  = tf.constant_initializer(0.0),
-		     activation_fn=tf.nn.elu, 
-		     normalizer_fn=layers.batch_norm,
-		     normalizer_params=batch_norm_params,
-		     trainable = training_nn,
-		     reuse=_reuse,
-		     padding='SAME',
-		     stride=1):   
+             kernel_size = 3,
+             weights_initializer = tf.random_normal_initializer(stddev=0.02),
+             biases_initializer  = tf.constant_initializer(0.0),
+             activation_fn=tf.nn.elu, 
+             normalizer_fn=layers.batch_norm,
+             normalizer_params=batch_norm_params,
+             trainable = training_nn,
+             reuse=_reuse,
+             padding='SAME',
+             stride=1):   
 
 
-	conv0 = layers.conv2d(images,num_outputs = 64, scope='SecondAMIN/conv0')
-	with tf.name_scope('convBlock-1') as scope:
+    conv0 = layers.conv2d(images,num_outputs = 64, scope='SecondAMIN/conv0')
+    with tf.name_scope('convBlock-1') as scope:
           conv1  = layers.conv2d(conv0,num_outputs = 128, scope='SecondAMIN/conv1')
           bconv1 = layers.conv2d(conv1,num_outputs = 196, scope='SecondAMIN/bconv1')
           conv2  = layers.conv2d(bconv1, num_outputs = 128, scope='SecondAMIN/conv2')
-	  pool1  = layers.max_pool2d(conv2, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='SecondAMIN/pool1')
-	  _activation_summary(conv1)
-	  _activation_summary(bconv1)
-	  _activation_summary(conv2)
+          pool1  = layers.max_pool2d(conv2, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='SecondAMIN/pool1')
+          _activation_summary(conv1)
+          _activation_summary(bconv1)
+          _activation_summary(conv2)
 
-	with tf.name_scope('convBlock-2') as scope:
+    with tf.name_scope('convBlock-2') as scope:
           conv3  = layers.conv2d(pool1, num_outputs = 128, scope='SecondAMIN/conv3')
           bconv2 = layers.conv2d(conv3, num_outputs = 196, scope='SecondAMIN/bconv2')
           conv4  = layers.conv2d(bconv2, num_outputs = 128, scope='SecondAMIN/conv4')
-	  pool2  = layers.max_pool2d(conv4, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='SecondAMIN/pool2')
-	  _activation_summary(conv3)
-	  _activation_summary(bconv2)
-	  _activation_summary(conv4)
+          pool2  = layers.max_pool2d(conv4, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='SecondAMIN/pool2')
+          _activation_summary(conv3)
+          _activation_summary(bconv2)
+          _activation_summary(conv4)
 
-	with tf.name_scope('convBlock-3') as scope:
+    with tf.name_scope('convBlock-3') as scope:
           conv5  = layers.conv2d(pool2, num_outputs = 128, scope='SecondAMIN/conv5')
           bconv3 = layers.conv2d(conv5, num_outputs = 196, scope='SecondAMIN/bconv3')
-	  conv6  = layers.conv2d(bconv3, num_outputs = 128, scope='SecondAMIN/conv6')
-	  pool3  = layers.avg_pool2d(conv6, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='SecondAMIN/pool3')
-	  _activation_summary(conv5)
-	  _activation_summary(bconv3)
-	  _activation_summary(conv6)
+          conv6  = layers.conv2d(bconv3, num_outputs = 128, scope='SecondAMIN/conv6')
+          pool3  = layers.avg_pool2d(conv6, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='SecondAMIN/pool3')
+          _activation_summary(conv5)
+          _activation_summary(bconv3)
+          _activation_summary(conv6)
 
-	map1 = tf.image.resize_images(pool1,[32,32])
-	map2 = tf.image.resize_images(pool2,[32,32])
-	map3 = tf.image.resize_images(pool3,[32,32])
-	  
-        summap = tf.concat([map1, map2, map3],3)
+    map1 = tf.image.resize_images(pool1,[32,32])
+    map2 = tf.image.resize_images(pool2,[32,32])
+    map3 = tf.image.resize_images(pool3,[32,32])
+      
+    summap = tf.concat([map1, map2, map3],3)
           
-	# 
-	with tf.name_scope('Depth-Map-Block') as scope:
-	  conv7 = layers.conv2d(summap, num_outputs = 128, scope='SecondAMIN/conv7')
-	  dp1 = tf.layers.dropout(conv7,rate = 0.2, training = training_nn, name = 'SecondAMIN/dropout1')
-	  conv8 = layers.conv2d(dp1, num_outputs = 64, scope='SecondAMIN/conv8')
-	  _activation_summary(conv7)
-	  _activation_summary(conv8)
+    # 
+    with tf.name_scope('Depth-Map-Block') as scope:
+      conv7 = layers.conv2d(summap, num_outputs = 128, scope='SecondAMIN/conv7')
+      dp1 = tf.layers.dropout(conv7,rate = 0.2, training = training_nn, name = 'SecondAMIN/dropout1')
+      conv8 = layers.conv2d(dp1, num_outputs = 64, scope='SecondAMIN/conv8')
+      _activation_summary(conv7)
+      _activation_summary(conv8)
   
 
   with arg_scope( [layers.conv2d],
-		     kernel_size = 3,
-		     weights_initializer = tf.random_normal_initializer(stddev=0.02),
-		     biases_initializer  = tf.constant_initializer(0.0),
-		     activation_fn= None, 
-		     normalizer_fn= None,
-		     padding='SAME',
+             kernel_size = 3,
+             weights_initializer = tf.random_normal_initializer(stddev=0.02),
+             biases_initializer  = tf.constant_initializer(0.0),
+             activation_fn= None, 
+             normalizer_fn= None,
+             padding='SAME',
                      trainable = training_nn,
-		     reuse=_reuse,
-		     stride=1):   
-	# 
-	conv11 = layers.conv2d(conv8, num_outputs = 1, scope='SecondAMIN/conv11')
-	_activation_summary(conv11)
-        tf.summary.image('depthMap_Second', conv11, max_outputs=FLAGS.batch_size)  
+             reuse=_reuse,
+             stride=1):   
+    # 
+    conv11 = layers.conv2d(conv8, num_outputs = 1, scope='SecondAMIN/conv11')
+    _activation_summary(conv11)
+    tf.summary.image('depthMap_Second', conv11, max_outputs=FLAGS.batch_size)  
 
 
 
 
 
   
-	
+    
   with arg_scope( [layers.conv2d],
-		     kernel_size = 3,
-		     weights_initializer = tf.random_normal_initializer(stddev=0.02),
-		     biases_initializer  = tf.constant_initializer(0.0),
-		     activation_fn=tf.nn.elu, 
-		     normalizer_fn=layers.batch_norm,
-		     normalizer_params=batch_norm_params,
-		     trainable = training_nn,
-		     reuse=_reuse,
-		     padding='SAME',
-		     stride=1):   
+             kernel_size = 3,
+             weights_initializer = tf.random_normal_initializer(stddev=0.02),
+             biases_initializer  = tf.constant_initializer(0.0),
+             activation_fn=tf.nn.elu, 
+             normalizer_fn=layers.batch_norm,
+             normalizer_params=batch_norm_params,
+             trainable = training_nn,
+             reuse=_reuse,
+             padding='SAME',
+             stride=1):   
  
 
 
  
-	conv0_fir = layers.conv2d(images,num_outputs = 24, scope='FirstAMIN/conv0') #
-	pool1_fir  = layers.max_pool2d(conv0_fir, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='FirstAMIN/pool1')
-	with tf.name_scope('convBlock-1_fir') as scope:
+    conv0_fir = layers.conv2d(images,num_outputs = 24, scope='FirstAMIN/conv0') #
+    pool1_fir  = layers.max_pool2d(conv0_fir, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='FirstAMIN/pool1')
+    with tf.name_scope('convBlock-1_fir') as scope:
           conv1_fir  = layers.conv2d(pool1_fir,num_outputs = 20, scope='FirstAMIN/conv1')#
           bconv1_fir = layers.conv2d(conv1_fir,num_outputs = 25, scope='FirstAMIN/bconv1')#
           conv2_fir  = layers.conv2d(bconv1_fir, num_outputs = 20, scope='FirstAMIN/conv2')#
-	  
+      
 
-	with tf.name_scope('convBlock-2_fir') as scope:
-	  pool2_fir  = layers.max_pool2d(conv2_fir, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='FirstAMIN/pool2')
-          conv3_fir  = layers.conv2d(pool2_fir, num_outputs = 20, scope='FirstAMIN/conv3')
-          bconv2_fir = layers.conv2d(conv3_fir, num_outputs = 25, scope='FirstAMIN/bconv2')
-          conv4_fir  = layers.conv2d(bconv2_fir, num_outputs = 20, scope='FirstAMIN/conv4')
-	  
+    with tf.name_scope('convBlock-2_fir') as scope:
+            pool2_fir  = layers.max_pool2d(conv2_fir, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='FirstAMIN/pool2')
+            conv3_fir  = layers.conv2d(pool2_fir, num_outputs = 20, scope='FirstAMIN/conv3')
+            bconv2_fir = layers.conv2d(conv3_fir, num_outputs = 25, scope='FirstAMIN/bconv2')
+            conv4_fir  = layers.conv2d(bconv2_fir, num_outputs = 20, scope='FirstAMIN/conv4')
+      
 
-	with tf.name_scope('convBlock-3_fir') as scope:
-	  pool3_fir  = layers.avg_pool2d(conv4_fir, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='FirstAMIN/pool3')
-          conv5_fir  = layers.conv2d(pool3_fir, num_outputs = 20, scope='FirstAMIN/conv5')
-          bconv3_fir = layers.conv2d(conv5_fir, num_outputs = 25, scope='FirstAMIN/bconv3')
-	  conv6_fir  = layers.conv2d(bconv3_fir, num_outputs = 20, scope='FirstAMIN/conv6')
-
-
-	map1_fir = tf.image.resize_images(conv2_fir,[32,32])
-	map2_fir = tf.image.resize_images(conv4_fir,[32,32])
-	map3_fir = conv6_fir
-	
-        summap_fir = tf.concat([map1_fir, map2_fir, map3_fir],3)
+    with tf.name_scope('convBlock-3_fir') as scope:
+            pool3_fir  = layers.avg_pool2d(conv4_fir, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='FirstAMIN/pool3')
+            conv5_fir  = layers.conv2d(pool3_fir, num_outputs = 20, scope='FirstAMIN/conv5')
+            bconv3_fir = layers.conv2d(conv5_fir, num_outputs = 25, scope='FirstAMIN/bconv3')
+            conv6_fir  = layers.conv2d(bconv3_fir, num_outputs = 20, scope='FirstAMIN/conv6')
 
 
-	#
-	with tf.name_scope('Depth-Map-Block_fir') as scope:
-	  conv7_fir = layers.conv2d(summap_fir, num_outputs = 28, scope='FirstAMIN/conv7')
-	  dp1_fir = tf.layers.dropout(conv7_fir,rate = 0, training = training_nn, name = 'FirstAMIN/dropout2')
-	  conv8_fir = layers.conv2d(dp1_fir, num_outputs =16 , scope='FirstAMIN/conv8')
-	 
+    map1_fir = tf.image.resize_images(conv2_fir,[32,32])
+    map2_fir = tf.image.resize_images(conv4_fir,[32,32])
+    map3_fir = conv6_fir
+    
+    summap_fir = tf.concat([map1_fir, map2_fir, map3_fir],3)
+
+
+    #
+    with tf.name_scope('Depth-Map-Block_fir') as scope:
+      conv7_fir = layers.conv2d(summap_fir, num_outputs = 28, scope='FirstAMIN/conv7')
+      dp1_fir = tf.layers.dropout(conv7_fir,rate = 0, training = training_nn, name = 'FirstAMIN/dropout2')
+      conv8_fir = layers.conv2d(dp1_fir, num_outputs =16 , scope='FirstAMIN/conv8')
+     
 
 
   with arg_scope( [layers.conv2d],
-		     kernel_size = 3,
-		     weights_initializer = tf.random_normal_initializer(stddev=0.02),
-		     biases_initializer  = None, #
+             kernel_size = 3,
+             weights_initializer = tf.random_normal_initializer(stddev=0.02),
+             biases_initializer  = None, #
 
-		     activation_fn= None, 
-		     normalizer_fn= None,
-		     padding='SAME',
-		     reuse=_reuse,
-		     stride=1):   
-	# 
-	conv11_fir = layers.conv2d(conv8_fir, num_outputs = 1, scope='FirstAMIN/conv11')
-	tf.summary.image('ZeroOneMap', tf.cast(256*conv11_fir,tf.uint8), max_outputs=FLAGS.batch_size)  
+             activation_fn= None, 
+             normalizer_fn= None,
+             padding='SAME',
+             reuse=_reuse,
+             stride=1):   
+    # 
+    conv11_fir = layers.conv2d(conv8_fir, num_outputs = 1, scope='FirstAMIN/conv11')
+    tf.summary.image('ZeroOneMap', tf.cast(256*conv11_fir,tf.uint8), max_outputs=FLAGS.batch_size)  
   
-	
+    
   with arg_scope( [layers.conv2d],
-		     kernel_size = 3,
-		     weights_initializer = tf.random_normal_initializer(stddev=0.02),
-		     biases_initializer  = tf.constant_initializer(0.0),
-		     activation_fn=tf.nn.elu, 
-		     normalizer_fn=layers.batch_norm,
-		     normalizer_params=batch_norm_params,
-		     trainable = training_nn,
-		     padding='SAME',
-		     reuse=_reuse,
-		     stride=1):   
+             kernel_size = 3,
+             weights_initializer = tf.random_normal_initializer(stddev=0.02),
+             biases_initializer  = tf.constant_initializer(0.0),
+             activation_fn=tf.nn.elu, 
+             normalizer_fn=layers.batch_norm,
+             normalizer_params=batch_norm_params,
+             trainable = training_nn,
+             padding='SAME',
+             reuse=_reuse,
+             stride=1):   
 
 
-  	#
-	with tf.name_scope('Score-Map-Block09') as scope:
-	  summap_fir = tf.image.resize_images(summap_fir,[256,256])
-	  conv9_fir = layers.conv2d(summap_fir, num_outputs = 28, scope='FirstAMIN/conv9')
-	  conv10_fir = layers.conv2d(conv9_fir, num_outputs = 24, scope='FirstAMIN/conv10')
-	  #
+    #
+    with tf.name_scope('Score-Map-Block09') as scope:
+      summap_fir = tf.image.resize_images(summap_fir,[256,256])
+      conv9_fir = layers.conv2d(summap_fir, num_outputs = 28, scope='FirstAMIN/conv9')
+      conv10_fir = layers.conv2d(conv9_fir, num_outputs = 24, scope='FirstAMIN/conv10')
+      #
 
-	  conv12_fir = layers.conv2d(conv10_fir, num_outputs = 20, scope='FirstAMIN/conv12')
-	  conv13_fir = layers.conv2d(conv12_fir, num_outputs = 20, scope='FirstAMIN/conv13')
-	  #
-	  conv14_fir = layers.conv2d(conv13_fir, num_outputs = 20, scope='FirstAMIN/conv14')
-	  conv15_fir = layers.conv2d(conv14_fir, num_outputs = 16, scope='FirstAMIN/conv15')
-	  #
-	  conv16_fir = layers.conv2d(conv15_fir, num_outputs = 16, scope='FirstAMIN/conv16')
+      conv12_fir = layers.conv2d(conv10_fir, num_outputs = 20, scope='FirstAMIN/conv12')
+      conv13_fir = layers.conv2d(conv12_fir, num_outputs = 20, scope='FirstAMIN/conv13')
+      #
+      conv14_fir = layers.conv2d(conv13_fir, num_outputs = 20, scope='FirstAMIN/conv14')
+      conv15_fir = layers.conv2d(conv14_fir, num_outputs = 16, scope='FirstAMIN/conv15')
+      #
+      conv16_fir = layers.conv2d(conv15_fir, num_outputs = 16, scope='FirstAMIN/conv16')
 
 
 
   with arg_scope( [layers.conv2d],
-		     kernel_size = 3,
-		     weights_initializer = tf.random_normal_initializer(stddev=0.002),
-		     biases_initializer  = None, #tf.constant_initializer(0.0),
+             kernel_size = 3,
+             weights_initializer = tf.random_normal_initializer(stddev=0.002),
+             biases_initializer  = None, #tf.constant_initializer(0.0),
 
-		     activation_fn= None, 
-		     normalizer_fn= None,
-		     padding='SAME',
-		     reuse=_reuse,
-		     stride=1): 
-	  conv17 = layers.conv2d(conv16_fir, num_outputs = 6, scope='FirstAMIN/conv17')
-	  
-          thirdPart_comp_1 = tf.complex(conv17, tf.zeros_like(conv17))
-          thirdPart_comp_1=tf.transpose(thirdPart_comp_1, perm=[0,3,1,2])
+             activation_fn= None, 
+             normalizer_fn= None,
+             padding='SAME',
+             reuse=_reuse,
+             stride=1): 
+      conv17 = layers.conv2d(conv16_fir, num_outputs = 6, scope='FirstAMIN/conv17')
+      
+      thirdPart_comp_1 = tf.complex(conv17, tf.zeros_like(conv17))
+      thirdPart_comp_1=tf.transpose(thirdPart_comp_1, perm=[0,3,1,2])
 
-          thirdPart_fft_1=tf.abs(tf.fft2d(thirdPart_comp_1, name='summap_fft_real_1'))
-          thirdPart_fft_1=tf.transpose(thirdPart_fft_1, perm=[0,2,3,1])
-	  thirdPart_fft_1=tf.log1p(thirdPart_fft_1[:,32:256-32,32:256-32,:])
-
-
+      thirdPart_fft_1=tf.abs(tf.fft2d(thirdPart_comp_1, name='summap_fft_real_1'))
+      thirdPart_fft_1=tf.transpose(thirdPart_fft_1, perm=[0,2,3,1])
+      thirdPart_fft_1=tf.log1p(thirdPart_fft_1[:,32:256-32,32:256-32,:])
 
 
-	  #
-	  Live_est1= images-conv17/45  
-          Live_est_mask = tf.cast(tf.greater(Live_est1,0),tf.float32)                             
-          Live_est=Live_est1*Live_est_mask
-	  #
+
+
+      #
+      Live_est1= images-conv17/45  
+      Live_est_mask = tf.cast(tf.greater(Live_est1,0),tf.float32)                             
+      Live_est=Live_est1*Live_est_mask
+      #
 
 
 
 #################################################################################################################################
 
   with arg_scope( [layers.conv2d],
-		     kernel_size = 3,
-		     weights_initializer = tf.random_normal_initializer(stddev=0.02),
-		     biases_initializer  = tf.constant_initializer(0.0),
-		     activation_fn=tf.nn.elu, 
-		     normalizer_fn=layers.batch_norm,
-		     normalizer_params=batch_norm_params,
-		     trainable = training_nn,
-		     padding='SAME',
-		     reuse=_reuse,
-		     stride=1):   
+             kernel_size = 3,
+             weights_initializer = tf.random_normal_initializer(stddev=0.02),
+             biases_initializer  = tf.constant_initializer(0.0),
+             activation_fn=tf.nn.elu, 
+             normalizer_fn=layers.batch_norm,
+             normalizer_params=batch_norm_params,
+             trainable = training_nn,
+             padding='SAME',
+             reuse=_reuse,
+             stride=1):   
  
 
-  	# Score Map Branch
-	with tf.name_scope('Score-Map-Block1_dis') as scope:
-	 
-	  conv9_dis = layers.conv2d(Live_est, num_outputs = 24, scope='ThirdAMIN/conv9')
-	  conv10_dis = layers.conv2d(conv9_dis, num_outputs = 20, scope='ThirdAMIN/conv10')
-    	  pool1_dis  = layers.max_pool2d(conv10_dis, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='ThirdPool1')
+    # Score Map Branch
+    with tf.name_scope('Score-Map-Block1_dis') as scope:
+     
+      conv9_dis = layers.conv2d(Live_est, num_outputs = 24, scope='ThirdAMIN/conv9')
+      conv10_dis = layers.conv2d(conv9_dis, num_outputs = 20, scope='ThirdAMIN/conv10')
+      pool1_dis  = layers.max_pool2d(conv10_dis, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='ThirdPool1')
 
-	  conv12_dis = layers.conv2d(pool1_dis, num_outputs = 20, scope='ThirdAMIN/conv12')
-	  conv13_dis = layers.conv2d(conv12_dis, num_outputs = 16, scope='ThirdAMIN/conv13')
-    	  pool2_dis  = layers.max_pool2d(conv13_dis, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='ThirdPool2')
+      conv12_dis = layers.conv2d(pool1_dis, num_outputs = 20, scope='ThirdAMIN/conv12')
+      conv13_dis = layers.conv2d(conv12_dis, num_outputs = 16, scope='ThirdAMIN/conv13')
+      pool2_dis  = layers.max_pool2d(conv13_dis, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='ThirdPool2')
 
-	  conv14_dis = layers.conv2d(pool2_dis, num_outputs = 12, scope='ThirdAMIN/conv14')
-	  conv15_dis = layers.conv2d(conv14_dis, num_outputs = 6, scope='ThirdAMIN/conv15')
-    	  pool3_dis  = layers.max_pool2d(conv15_dis, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='ThirdPool3')
+      conv14_dis = layers.conv2d(pool2_dis, num_outputs = 12, scope='ThirdAMIN/conv14')
+      conv15_dis = layers.conv2d(conv14_dis, num_outputs = 6, scope='ThirdAMIN/conv15')
+      pool3_dis  = layers.max_pool2d(conv15_dis, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='ThirdPool3')
 
-	  conv16_dis = layers.conv2d(pool3_dis, num_outputs = 1, scope='ThirdAMIN/conv16')
+      conv16_dis = layers.conv2d(pool3_dis, num_outputs = 1, scope='ThirdAMIN/conv16')
 
 
- 	  conv20_dis=tf.reshape(conv16_dis, [6,32*32])
-	  sc333_dis  = layers.fully_connected(conv20_dis, num_outputs = 100, reuse=_reuse, scope='ThirdAMIN/bconv15_sc333_dis')
+      conv20_dis=tf.reshape(conv16_dis, [6,32*32])
+      sc333_dis  = layers.fully_connected(conv20_dis, num_outputs = 100, reuse=_reuse, scope='ThirdAMIN/bconv15_sc333_dis')
 
-	  dp1_dis = tf.layers.dropout(sc333_dis,rate = 0.2, training = training_nn, name = 'dropout3')
+      dp1_dis = tf.layers.dropout(sc333_dis,rate = 0.2, training = training_nn, name = 'dropout3')
       
-	  sc  = layers.fully_connected(dp1_dis, num_outputs = 2, reuse=_reuse,
-		     weights_initializer = tf.random_normal_initializer(stddev=0.02),
-		     biases_initializer  = None, #tf.constant_initializer(0.0),
+      sc  = layers.fully_connected(dp1_dis, num_outputs = 2, reuse=_reuse,
+             weights_initializer = tf.random_normal_initializer(stddev=0.02),
+             biases_initializer  = None, #tf.constant_initializer(0.0),
 
-		     activation_fn= None, 
-		     normalizer_fn= None,scope='ThirdAMIN/bconv10_sc')
-
-
-	  conv9_dis2 = layers.conv2d(images, num_outputs = 24, reuse= True, scope='ThirdAMIN/conv9')
-	  conv10_dis2 = layers.conv2d(conv9_dis2, num_outputs = 20,  reuse= True, scope='ThirdAMIN/conv10')
-    	  pool1_dis2  = layers.max_pool2d(conv10_dis2, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='ThirdPool1')
-
-	  conv12_dis2 = layers.conv2d(pool1_dis2, num_outputs = 20,reuse= True, scope='ThirdAMIN/conv12')
-	  conv13_dis2 = layers.conv2d(conv12_dis2, num_outputs = 16, reuse= True,    scope='ThirdAMIN/conv13')
-    	  pool2_dis2  = layers.max_pool2d(conv13_dis2, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='ThirdPool2')
-
-	  conv14_dis2 = layers.conv2d(pool2_dis2, num_outputs = 12,  reuse= True, scope='ThirdAMIN/conv14')
-	  conv15_dis2 = layers.conv2d(conv14_dis2, num_outputs = 6,  reuse= True, scope='ThirdAMIN/conv15')
-    	  pool3_dis2  = layers.max_pool2d(conv15_dis2, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='ThirdPool3')
-
-	  conv16_dis2 = layers.conv2d(pool3_dis2, num_outputs = 1,  reuse= True, scope='ThirdAMIN/conv16')
+             activation_fn= None, 
+             normalizer_fn= None,scope='ThirdAMIN/bconv10_sc')
 
 
- 	  conv20_dis2=tf.reshape(conv16_dis2, [6,32*32])
-	  sc333_dis2  = layers.fully_connected(conv20_dis2,  reuse= True, num_outputs = 100,scope='ThirdAMIN/bconv15_sc333_dis')
+      conv9_dis2 = layers.conv2d(images, num_outputs = 24, reuse= True, scope='ThirdAMIN/conv9')
+      conv10_dis2 = layers.conv2d(conv9_dis2, num_outputs = 20,  reuse= True, scope='ThirdAMIN/conv10')
+      pool1_dis2  = layers.max_pool2d(conv10_dis2, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='ThirdPool1')
 
-	  dp1_dis2 = tf.layers.dropout(sc333_dis2,rate = 0.2, training = training_nn, name = 'dropout4')
+      conv12_dis2 = layers.conv2d(pool1_dis2, num_outputs = 20,reuse= True, scope='ThirdAMIN/conv12')
+      conv13_dis2 = layers.conv2d(conv12_dis2, num_outputs = 16, reuse= True,    scope='ThirdAMIN/conv13')
+      pool2_dis2  = layers.max_pool2d(conv13_dis2, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='ThirdPool2')
+
+      conv14_dis2 = layers.conv2d(pool2_dis2, num_outputs = 12,  reuse= True, scope='ThirdAMIN/conv14')
+      conv15_dis2 = layers.conv2d(conv14_dis2, num_outputs = 6,  reuse= True, scope='ThirdAMIN/conv15')
+      pool3_dis2  = layers.max_pool2d(conv15_dis2, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='ThirdPool3')
+
+      conv16_dis2 = layers.conv2d(pool3_dis2, num_outputs = 1,  reuse= True, scope='ThirdAMIN/conv16')
+
+
+      conv20_dis2=tf.reshape(conv16_dis2, [6,32*32])
+      sc333_dis2  = layers.fully_connected(conv20_dis2,  reuse= True, num_outputs = 100,scope='ThirdAMIN/bconv15_sc333_dis')
+
+      dp1_dis2 = tf.layers.dropout(sc333_dis2,rate = 0.2, training = training_nn, name = 'dropout4')
       
-	  sc2  = layers.fully_connected(dp1_dis2, num_outputs = 2,  reuse= True, 
-		     weights_initializer = tf.random_normal_initializer(stddev=0.02),
-		     biases_initializer  = None, #tf.constant_initializer(0.0),
+      sc2  = layers.fully_connected(dp1_dis2, num_outputs = 2,  reuse= True, 
+             weights_initializer = tf.random_normal_initializer(stddev=0.02),
+             biases_initializer  = None, #tf.constant_initializer(0.0),
 
-		     activation_fn= None, 
-		     normalizer_fn= None,scope='ThirdAMIN/bconv10_sc')
+             activation_fn= None, 
+             normalizer_fn= None,scope='ThirdAMIN/bconv10_sc')
 ##################################################################################################################################
 
   batch_norm_decay = 0.9
@@ -420,89 +420,89 @@ def inference(images, size,labels, training_nn, training_class, _reuse):
     'updates_collections': None, #
     'trainable':False,
     #'reuse':True
-  }	
+  } 
   with arg_scope( [layers.conv2d],
-		     kernel_size = 3,
-		     weights_initializer = tf.random_normal_initializer(stddev=0.02),
-		     biases_initializer  = tf.constant_initializer(0.0),
-		     activation_fn=tf.nn.elu, 
-		     normalizer_fn=layers.batch_norm,
-		     normalizer_params=batch_norm_params,
-		     trainable = False,
-		     padding='SAME',
-		     reuse=True,
-		     stride=1): 
+             kernel_size = 3,
+             weights_initializer = tf.random_normal_initializer(stddev=0.02),
+             biases_initializer  = tf.constant_initializer(0.0),
+             activation_fn=tf.nn.elu, 
+             normalizer_fn=layers.batch_norm,
+             normalizer_params=batch_norm_params,
+             trainable = False,
+             padding='SAME',
+             reuse=True,
+             stride=1): 
  #################################################################################################################################
 
-	conv0_new = layers.conv2d(Live_est,num_outputs = 64, scope='SecondAMIN/conv0')
-	with tf.name_scope('convBlock-1_new') as scope:
+    conv0_new = layers.conv2d(Live_est,num_outputs = 64, scope='SecondAMIN/conv0')
+    with tf.name_scope('convBlock-1_new') as scope:
           conv1_new  = layers.conv2d(conv0_new,num_outputs = 128, scope='SecondAMIN/conv1')
           bconv1_new = layers.conv2d(conv1_new,num_outputs = 196, scope='SecondAMIN/bconv1')
           conv2_new  = layers.conv2d(bconv1_new, num_outputs = 128, scope='SecondAMIN/conv2')
-	  pool1_new  = layers.max_pool2d(conv2_new, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='SecondAMIN/pool1')
+          pool1_new  = layers.max_pool2d(conv2_new, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='SecondAMIN/pool1')
 
-	with tf.name_scope('convBlock-2_new') as scope:
+    with tf.name_scope('convBlock-2_new') as scope:
           conv3_new  = layers.conv2d(pool1_new, num_outputs = 128, scope='SecondAMIN/conv3')
           bconv2_new = layers.conv2d(conv3_new, num_outputs = 196, scope='SecondAMIN/bconv2')
           conv4_new  = layers.conv2d(bconv2_new, num_outputs = 128, scope='SecondAMIN/conv4')
-	  pool2_new  = layers.max_pool2d(conv4_new, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='SecondAMIN/pool2')
+          pool2_new  = layers.max_pool2d(conv4_new, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='SecondAMIN/pool2')
 
-	with tf.name_scope('convBlock-3_new') as scope:
+    with tf.name_scope('convBlock-3_new') as scope:
           conv5_new  = layers.conv2d(pool2_new, num_outputs = 128, scope='SecondAMIN/conv5')
           bconv3_new = layers.conv2d(conv5_new, num_outputs = 196, scope='SecondAMIN/bconv3')
-	  conv6_new  = layers.conv2d(bconv3_new, num_outputs = 128, scope='SecondAMIN/conv6')
-	  pool3_new  = layers.avg_pool2d(conv6_new, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='SecondAMIN/pool3')
+          conv6_new  = layers.conv2d(bconv3_new, num_outputs = 128, scope='SecondAMIN/conv6')
+          pool3_new  = layers.avg_pool2d(conv6_new, kernel_size=[3, 3], stride=[2, 2], padding='SAME', scope='SecondAMIN/pool3')
 
-	map1_new = tf.image.resize_images(pool1_new,[32,32])
-	map2_new = tf.image.resize_images(pool2_new,[32,32])
-	map3_new = tf.image.resize_images(pool3_new,[32,32])
-	  
-        summap_new = tf.concat([map1_new, map2_new, map3_new],3)
+    map1_new = tf.image.resize_images(pool1_new,[32,32])
+    map2_new = tf.image.resize_images(pool2_new,[32,32])
+    map3_new = tf.image.resize_images(pool3_new,[32,32])
+      
+    summap_new = tf.concat([map1_new, map2_new, map3_new],3)
           
-	# Depth Map Branch
-	with tf.name_scope('Depth-Map-Block_new') as scope:
-	  conv7_new = layers.conv2d(summap_new, num_outputs = 128, scope='SecondAMIN/conv7')
-	  dp1_new = tf.layers.dropout(conv7_new,rate = 0.2, training = training_nn, name = 'SecondAMIN/dropout1')
-	  conv8_new = layers.conv2d(dp1_new, num_outputs = 64, scope='SecondAMIN/conv8')
+    # Depth Map Branch
+    with tf.name_scope('Depth-Map-Block_new') as scope:
+      conv7_new = layers.conv2d(summap_new, num_outputs = 128, scope='SecondAMIN/conv7')
+      dp1_new = tf.layers.dropout(conv7_new,rate = 0.2, training = training_nn, name = 'SecondAMIN/dropout1')
+      conv8_new = layers.conv2d(dp1_new, num_outputs = 64, scope='SecondAMIN/conv8')
   
 
   with arg_scope( [layers.conv2d],
-		     kernel_size = 3,
-		     weights_initializer = tf.random_normal_initializer(stddev=0.02),
-		     biases_initializer  = tf.constant_initializer(0.0),
-		     activation_fn= None, 
-		     normalizer_fn= None,
-		     padding='SAME',
+             kernel_size = 3,
+             weights_initializer = tf.random_normal_initializer(stddev=0.02),
+             biases_initializer  = tf.constant_initializer(0.0),
+             activation_fn= None, 
+             normalizer_fn= None,
+             padding='SAME',
                      trainable = False,
-		     reuse=True,
-		     stride=1):   
-	# Depth Map Branch
-	conv11_new = layers.conv2d(conv8_new, num_outputs = 1, scope='SecondAMIN/conv11')
+             reuse=True,
+             stride=1):   
+    # Depth Map Branch
+    conv11_new = layers.conv2d(conv8_new, num_outputs = 1, scope='SecondAMIN/conv11')
 
 
 
 
 
 
-        label_Amin1=size
-        LabelsWholeImage=tf.cast(np.ones([6,32,32,1]), tf.float32)
-        LabelsWholeImage2=LabelsWholeImage*tf.reshape(tf.cast(1-label_Amin1,tf.float32),[6,1,1,1])
-        LabelsWholeImage=labels*tf.reshape(tf.cast(label_Amin1,tf.float32),[6,1,1,1])
+    label_Amin1=size
+    LabelsWholeImage=tf.cast(np.ones([6,32,32,1]), tf.float32)
+    LabelsWholeImage2=LabelsWholeImage*tf.reshape(tf.cast(1-label_Amin1,tf.float32),[6,1,1,1])
+    LabelsWholeImage=labels*tf.reshape(tf.cast(label_Amin1,tf.float32),[6,1,1,1])
 
-	Z_GT2=np.zeros([6,3,3,1])
-	Z_GT2[:,1,1,:]=1
-	GT2=tf.cast(Z_GT2, tf.float32)
+    Z_GT2=np.zeros([6,3,3,1])
+    Z_GT2[:,1,1,:]=1
+    GT2=tf.cast(Z_GT2, tf.float32)
 
 
-	tf.summary.image('GT2', LabelsWholeImage[:,:,:,0:1], max_outputs=FLAGS.batch_size) 
-        tf.summary.image('SC', tf.cast(256*conv11[:,:,:,0:1],tf.uint8), max_outputs=FLAGS.batch_size) 
+    tf.summary.image('GT2', LabelsWholeImage[:,:,:,0:1], max_outputs=FLAGS.batch_size) 
+    tf.summary.image('SC', tf.cast(256*conv11[:,:,:,0:1],tf.uint8), max_outputs=FLAGS.batch_size) 
 
-        tf.summary.image('Live_SC', tf.cast(256*conv11_new[:,:,:,0:1],tf.uint8), max_outputs=FLAGS.batch_size) 
-        tf.summary.image('Live', tf.cast(256*Live_est[:,:,:,3:6],tf.uint8), max_outputs=FLAGS.batch_size) 
-        tf.summary.image('inputImage', tf.cast(256*images[:,:,:,3:6],tf.uint8), max_outputs=FLAGS.batch_size) 
-	tf.summary.image('GT3_Artifact', LabelsWholeImage2[:,:,:,0:1], max_outputs=FLAGS.batch_size) 
-        tf.summary.image('Artifact', conv17[:,:,:,3:6], max_outputs=FLAGS.batch_size)
-  return Live_est, conv17, conv11, GT2,conv17,images,thirdPart_fft_1,LabelsWholeImage, conv11_new,conv11_new  , LabelsWholeImage2, sc, sc2, conv11_fir
+    tf.summary.image('Live_SC', tf.cast(256*conv11_new[:,:,:,0:1],tf.uint8), max_outputs=FLAGS.batch_size) 
+    tf.summary.image('Live', tf.cast(256*Live_est[:,:,:,3:6],tf.uint8), max_outputs=FLAGS.batch_size) 
+    tf.summary.image('inputImage', tf.cast(256*images[:,:,:,3:6],tf.uint8), max_outputs=FLAGS.batch_size) 
+    tf.summary.image('GT3_Artifact', LabelsWholeImage2[:,:,:,0:1], max_outputs=FLAGS.batch_size) 
+    tf.summary.image('Artifact', conv17[:,:,:,3:6], max_outputs=FLAGS.batch_size)
+    return Live_est, conv17, conv11, GT2,conv17,images,thirdPart_fft_1,LabelsWholeImage, conv11_new,conv11_new  , LabelsWholeImage2, sc, sc2, conv11_fir
 
  # 
 
@@ -539,7 +539,7 @@ def lossThird(dmaps, smaps, labels, slabels, sc,GT2, fftmapA, A, B,bin_labels, b
     bin_labels3=tf.ones([6,1])
     cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
                     labels=tf.reshape(tf.cast(bin_labels3,tf.int32),[-1]), logits= tf.cast(sc_fake, tf.float32), 
-		    name='cross_entropy_per_example') # logits = (N,2)  label = (N,) tf.reshape(label,[-1])
+            name='cross_entropy_per_example') # logits = (N,2)  label = (N,) tf.reshape(label,[-1])
 
 
     loss22 = tf.reduce_mean(cross_entropy, name='classification_loss2')*1
@@ -549,7 +549,7 @@ def lossThird(dmaps, smaps, labels, slabels, sc,GT2, fftmapA, A, B,bin_labels, b
     bin_labels_1=tf.cast(sc_real, tf.float32)*tf.cast(bin_labels,tf.float32)
     cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
                     labels=tf.reshape(tf.cast(bin_labels3,tf.int32),[-1]), logits= bin_labels_1, 
-		    name='cross_entropy_per_example2') # logits = (N,2)  label = (N,) tf.reshape(label,[-1])
+            name='cross_entropy_per_example2') # logits = (N,2)  label = (N,) tf.reshape(label,[-1])
 
     loss23 = tf.reduce_mean(cross_entropy, name='classification_loss3')*1
     tf.summary.scalar('Loss',loss23+loss22)
@@ -593,7 +593,7 @@ def lossFirst(dmaps, smaps, labels, slabels, sc,GT2, fftmapA, A, B,bin_labels, b
     bin_labelsE=tf.zeros([6,1])
     cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
                     labels=tf.reshape(tf.cast(bin_labelsE,tf.int32),[-1]), logits= tf.cast(sc_fake, tf.float32), 
-		    name='cross_entropy_per_example')
+            name='cross_entropy_per_example')
 
 
     loss22 = tf.reduce_mean(cross_entropy, name='classification_loss2')*1*100
